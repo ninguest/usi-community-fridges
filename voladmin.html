@@ -1,0 +1,1584 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Community Fridges SG - Volunteer & Admin Portal</title>
+    <link rel="stylesheet" href="https://unpkg.com/leaflet/dist/leaflet.css" />
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { 
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif; 
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); 
+            min-height: 100vh; 
+            overflow-x: hidden; 
+        }
+        .mobile-container { 
+            max-width: 375px; 
+            margin: 0 auto; 
+            background: white; 
+            min-height: 100vh; 
+            position: relative; 
+            box-shadow: 0 0 30px rgba(0,0,0,0.3); 
+        }
+
+        /* Status Bar */
+        .status-bar {
+            height: 44px;
+            background: #000;
+            color: white;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 0 20px;
+            font-size: 14px;
+            font-weight: 600;
+        }
+
+        /* Header */
+        .header {
+            background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
+            color: white;
+            padding: 20px;
+            text-align: center;
+            position: relative;
+        }
+        .header h1 { font-size: 24px; font-weight: 700; margin-bottom: 5px; }
+        .header p { opacity: 0.9; font-size: 14px; }
+        .role-badge {
+            position: absolute;
+            top: 20px;
+            right: 20px;
+            background: rgba(255,255,255,0.2);
+            padding: 4px 12px;
+            border-radius: 20px;
+            font-size: 12px;
+            font-weight: 500;
+        }
+
+        /* Navigation */
+        .nav-tabs {
+            display: flex;
+            background: white;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        .nav-tab {
+            flex: 1;
+            padding: 16px;
+            text-align: center;
+            background: none;
+            border: none;
+            font-size: 14px;
+            font-weight: 500;
+            color: #666;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            border-bottom: 3px solid transparent;
+        }
+        .nav-tab.active {
+            color: #4facfe;
+            border-bottom-color: #4facfe;
+            background: rgba(79, 172, 254, 0.05);
+        }
+
+        /* Content Area */
+        .content {
+            padding: 0;
+            padding-bottom: 80px;
+        }
+        .tab-content {
+            display: none;
+            animation: fadeIn 0.3s ease;
+        }
+        .tab-content.active {
+            display: block;
+        }
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        /* Job Slots */
+        .job-list {
+            padding: 20px;
+            background: #f8f9fa;
+        }
+        .job-card {
+            background: white;
+            border-radius: 16px;
+            padding: 20px;
+            margin-bottom: 15px;
+            box-shadow: 0 2px 15px rgba(0,0,0,0.08);
+            transition: transform 0.2s ease;
+            cursor: pointer;
+        }
+        .job-card:hover {
+            transform: translateY(-2px);
+        }
+        .job-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            margin-bottom: 12px;
+        }
+        .job-title {
+            font-size: 16px;
+            font-weight: 600;
+            color: #333;
+            flex: 1;
+        }
+        .job-status {
+            padding: 4px 12px;
+            border-radius: 20px;
+            font-size: 12px;
+            font-weight: 500;
+            margin-left: 10px;
+        }
+        .status-available {
+            background: #d4edda;
+            color: #155724;
+        }
+        .status-booked {
+            background: #fff3cd;
+            color: #856404;
+        }
+        .status-completed {
+            background: #cce5ff;
+            color: #0056b3;
+        }
+        .status-urgent {
+            background: #f8d7da;
+            color: #721c24;
+        }
+        .job-details {
+            font-size: 14px;
+            color: #666;
+            line-height: 1.4;
+            margin-bottom: 10px;
+        }
+        .job-meta {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            font-size: 12px;
+            color: #4facfe;
+            font-weight: 500;
+        }
+
+        /* Buttons */
+        .btn {
+            padding: 8px 16px;
+            border: none;
+            border-radius: 8px;
+            font-size: 14px;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+        .btn-primary {
+            background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
+            color: white;
+        }
+        .btn-secondary {
+            background: #e9ecef;
+            color: #333;
+        }
+        .btn-danger {
+            background: linear-gradient(135deg, #ff6b6b 0%, #ee5a52 100%);
+            color: white;
+        }
+        .btn-success {
+            background: linear-gradient(135deg, #51cf66 0%, #40c057 100%);
+            color: white;
+        }
+        .btn:hover {
+            transform: translateY(-1px);
+            box-shadow: 0 4px 15px rgba(0,0,0,0.2);
+        }
+
+        /* Forms */
+        .form-section {
+            padding: 20px;
+            background: white;
+        }
+        .form-group {
+            margin-bottom: 20px;
+        }
+        .form-label {
+            font-size: 14px;
+            font-weight: 600;
+            color: #333;
+            margin-bottom: 8px;
+            display: block;
+        }
+        .form-input {
+            width: 100%;
+            padding: 12px 16px;
+            border: 2px solid #e0e0e0;
+            border-radius: 12px;
+            font-size: 16px;
+            transition: border-color 0.3s ease;
+        }
+        .form-input:focus {
+            outline: none;
+            border-color: #4facfe;
+        }
+        .btn-full {
+            width: 100%;
+            padding: 16px;
+            margin-bottom: 12px;
+        }
+
+        /* Stats Cards */
+        .stats-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 15px;
+            padding: 20px;
+            background: white;
+        }
+        .stat-card {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 20px;
+            border-radius: 16px;
+            text-align: center;
+            box-shadow: 0 4px 15px rgba(102, 126, 234, 0.3);
+        }
+        .stat-number {
+            font-size: 28px;
+            font-weight: 700;
+            margin-bottom: 5px;
+        }
+        .stat-label {
+            font-size: 12px;
+            opacity: 0.9;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        /* Modal */
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0,0,0,0.5);
+            z-index: 1000;
+            align-items: center;
+            justify-content: center;
+        }
+        .modal-content {
+            background: white;
+            border-radius: 16px;
+            padding: 24px;
+            max-width: 320px;
+            width: 90%;
+            max-height: 80vh;
+            overflow-y: auto;
+        }
+        .modal-header {
+            font-size: 18px;
+            font-weight: 600;
+            margin-bottom: 16px;
+            color: #333;
+        }
+        .modal-body {
+            margin-bottom: 20px;
+        }
+        .modal-buttons {
+            display: flex;
+            gap: 10px;
+        }
+        .modal-buttons .btn {
+            flex: 1;
+        }
+
+        /* Bottom Navigation */
+        .bottom-nav {
+            position: fixed;
+            bottom: 0;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 100%;
+            max-width: 375px;
+            background: white;
+            border-top: 1px solid #e0e0e0;
+            display: flex;
+            box-shadow: 0 -2px 10px rgba(0,0,0,0.1);
+        }
+        .nav-item {
+            flex: 1;
+            padding: 12px 8px 8px;
+            text-align: center;
+            background: none;
+            border: none;
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+        .nav-item.active {
+            color: #4facfe;
+        }
+        .nav-icon {
+            font-size: 20px;
+            margin-bottom: 4px;
+        }
+        .nav-label {
+            font-size: 10px;
+            font-weight: 500;
+        }
+
+        /* Profile specific styles */
+        .profile-header {
+            text-align: center;
+            padding: 20px;
+            background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
+            color: white;
+            border-radius: 16px;
+            margin-bottom: 20px;
+        }
+        .profile-avatar {
+            width: 80px;
+            height: 80px;
+            border-radius: 50%;
+            background: rgba(255,255,255,0.2);
+            margin: 0 auto 15px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 36px;
+        }
+        .profile-name {
+            font-size: 24px;
+            font-weight: 700;
+            margin-bottom: 5px;
+        }
+        .profile-role {
+            opacity: 0.9;
+            font-size: 16px;
+        }
+        .profile-section {
+            background: white;
+            border-radius: 12px;
+            padding: 20px;
+            margin-bottom: 16px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.05);
+        }
+        .profile-section h3 {
+            font-size: 18px;
+            font-weight: 600;
+            color: #333;
+            margin-bottom: 16px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        .settings-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 12px 0;
+            border-bottom: 1px solid #f0f0f0;
+        }
+        .settings-item:last-child {
+            border-bottom: none;
+        }
+        .settings-label {
+            font-weight: 500;
+            color: #333;
+        }
+        .settings-value {
+            color: #666;
+            font-size: 14px;
+        }
+        .toggle-switch {
+            position: relative;
+            width: 50px;
+            height: 24px;
+            background: #ccc;
+            border-radius: 12px;
+            cursor: pointer;
+            transition: background 0.3s;
+        }
+        .toggle-switch.active {
+            background: #4facfe;
+        }
+        .toggle-switch::after {
+            content: '';
+            position: absolute;
+            width: 20px;
+            height: 20px;
+            border-radius: 50%;
+            background: white;
+            top: 2px;
+            left: 2px;
+            transition: transform 0.3s;
+        }
+        .toggle-switch.active::after {
+            transform: translateX(26px);
+        }
+        .achievement-badge {
+            display: inline-block;
+            background: linear-gradient(135deg, #ffd700, #ffed4e);
+            color: #333;
+            padding: 6px 12px;
+            border-radius: 20px;
+            font-size: 12px;
+            font-weight: 600;
+            margin: 4px;
+        }
+        .availability-slot {
+            background: #f8f9fa;
+            border: 2px solid #e9ecef;
+            border-radius: 8px;
+            padding: 12px;
+            margin-bottom: 8px;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+        .availability-slot.selected {
+            background: #e3f2fd;
+            border-color: #4facfe;
+        }
+        .recent-activity {
+            padding: 12px 0;
+            border-bottom: 1px solid #f0f0f0;
+        }
+        .recent-activity:last-child {
+            border-bottom: none;
+        }
+        .activity-date {
+            font-size: 12px;
+            color: #666;
+            margin-bottom: 4px;
+        }
+        .activity-description {
+            font-size: 14px;
+            color: #333;
+        }
+
+        /* Responsive adjustments */
+        @media (max-width: 375px) {
+            .mobile-container {
+                max-width: 100%;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="mobile-container">
+        <!-- Status Bar -->
+        <div class="status-bar">
+            <span>9:41</span>
+            <span>🔋 100%</span>
+        </div>
+
+        <!-- Header -->
+        <div class="header">
+            <div class="role-badge" id="role-badge">Volunteer</div>
+            <h1>Community Fridges SG</h1>
+            <p id="header-subtitle">Volunteer Portal</p>
+        </div>
+
+        <!-- Navigation Tabs -->
+        <div class="nav-tabs" id="main-tabs">
+            <button class="nav-tab active" onclick="showTab('jobs')" id="tab-jobs">Available Jobs</button>
+            <button class="nav-tab" onclick="showTab('my-jobs')" id="tab-my-jobs">My Jobs</button>
+            <button class="nav-tab" onclick="showTab('stats')" id="tab-stats">Stats</button>
+        </div>
+
+        <!-- Content Area -->
+        <div class="content">
+            <!-- Jobs Tab (Volunteer) / Manage Jobs Tab (Admin) -->
+            <div class="tab-content active" id="jobs-tab">
+                <div class="stats-grid">
+                    <div class="stat-card">
+                        <div class="stat-number" id="available-jobs-count">8</div>
+                        <div class="stat-label">Available Jobs</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-number" id="urgent-jobs-count">2</div>
+                        <div class="stat-label">Urgent Tasks</div>
+                    </div>
+                </div>
+                <div class="job-list" id="job-list"></div>
+            </div>
+
+            <!-- My Jobs Tab (Volunteer) / Volunteers Tab (Admin) -->
+            <div class="tab-content" id="my-jobs-tab">
+                <div class="job-list" id="my-job-list"></div>
+            </div>
+
+            <!-- Stats Tab -->
+            <div class="tab-content" id="stats-tab">
+                <div class="form-section">
+                    <h2 style="font-size: 20px; font-weight: 600; color: #333; margin-bottom: 20px;" id="stats-title">My Volunteer Stats</h2>
+                    <div class="stats-grid" style="margin-bottom: 20px;">
+                        <div class="stat-card">
+                            <div class="stat-number" id="completed-jobs">12</div>
+                            <div class="stat-label">Jobs Completed</div>
+                        </div>
+                        <div class="stat-card">
+                            <div class="stat-number" id="hours-volunteered">48</div>
+                            <div class="stat-label">Hours Volunteered</div>
+                        </div>
+                        <div class="stat-card">
+                            <div class="stat-number" id="fridges-helped">5</div>
+                            <div class="stat-label">Fridges Helped</div>
+                        </div>
+                        <div class="stat-card">
+                            <div class="stat-number" id="community-impact">156</div>
+                            <div class="stat-label">People Helped</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Profile Tab -->
+            <div class="tab-content" id="profile-tab">
+                <div class="form-section" id="profile-content">
+                    <!-- Profile content will be dynamically generated -->
+                </div>
+            </div>
+        </div>
+
+        <!-- Modal for Job Details -->
+        <div class="modal" id="job-modal">
+            <div class="modal-content">
+                <div class="modal-header" id="modal-title"></div>
+                <div class="modal-body" id="modal-body"></div>
+                <div class="modal-buttons">
+                    <button class="btn btn-secondary" onclick="closeModal()">Cancel</button>
+                    <button class="btn btn-primary" id="modal-action-btn" onclick="performModalAction()"></button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Modal for Creating Job (Admin only) -->
+        <div class="modal" id="create-job-modal">
+            <div class="modal-content">
+                <div class="modal-header">Create New Job</div>
+                <div class="modal-body">
+                    <div class="form-group">
+                        <label class="form-label">Job Type</label>
+                        <select class="form-input" id="create-job-type">
+                            <option value="restock">Fridge Restocking</option>
+                            <option value="maintenance">Maintenance Check</option>
+                            <option value="cleaning">Cleaning & Organization</option>
+                            <option value="inspection">Safety Inspection</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Fridge Location</label>
+                        <select class="form-input" id="create-job-location">
+                            <option value="Toa Payoh Hub">Toa Payoh Hub</option>
+                            <option value="Ang Mo Kio Community">Ang Mo Kio Community</option>
+                            <option value="Jurong West Street 42">Jurong West Street 42</option>
+                            <option value="Bedok North Community">Bedok North Community</option>
+                            <option value="Clementi Avenue 2">Clementi Avenue 2</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Date & Time</label>
+                        <input type="datetime-local" class="form-input" id="create-job-datetime">
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Duration (hours)</label>
+                        <input type="number" class="form-input" id="create-job-duration" min="1" max="8" value="2">
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Priority</label>
+                        <select class="form-input" id="create-job-priority">
+                            <option value="normal">Normal</option>
+                            <option value="urgent">Urgent</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Description</label>
+                        <textarea class="form-input" id="create-job-description" rows="3" placeholder="Additional details about the job..."></textarea>
+                    </div>
+                </div>
+                <div class="modal-buttons">
+                    <button class="btn btn-secondary" onclick="closeCreateJobModal()">Cancel</button>
+                    <button class="btn btn-success" onclick="createJob()">Create Job</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Bottom Navigation -->
+        <div class="bottom-nav">
+            <button class="nav-item active" onclick="showTab('jobs')">
+                <div class="nav-icon">💼</div>
+                <div class="nav-label" id="nav-jobs">Jobs</div>
+            </button>
+            <button class="nav-item" onclick="showTab('my-jobs')">
+                <div class="nav-icon">📋</div>
+                <div class="nav-label" id="nav-my-jobs">My Jobs</div>
+            </button>
+            <button class="nav-item" onclick="showTab('stats')">
+                <div class="nav-icon">📊</div>
+                <div class="nav-label">Stats</div>
+            </button>
+            <button class="nav-item" onclick="switchRole()">
+                <div class="nav-icon">🔄</div>
+                <div class="nav-label">Switch</div>
+            </button>
+            <button class="nav-item" onclick="showTab('profile')">
+                <div class="nav-icon">👤</div>
+                <div class="nav-label">Profile</div>
+            </button>
+        </div>
+    </div>
+
+    <script>
+        // Global state
+        let currentRole = 'volunteer'; // 'volunteer' or 'admin'
+        let currentModal = null;
+        let userProfile = {
+            volunteer: {
+                name: 'Sarah Lim',
+                email: 'sarah.lim@email.com',
+                phone: '+65 9123 4567',
+                joinDate: '2024-03-15',
+                rating: 4.8,
+                completedJobs: 12,
+                hoursVolunteered: 48,
+                badges: ['First Timer', 'Reliable Helper', 'Community Star'],
+                preferences: {
+                    notifications: true,
+                    emailUpdates: true,
+                    smsAlerts: false,
+                    darkMode: false,
+                    language: 'en'
+                },
+                availability: ['Monday Morning', 'Wednesday Evening', 'Saturday Afternoon'],
+                emergencyContact: 'John Lim - +65 9876 5432',
+                skills: ['Food Safety Certified', 'First Aid Trained', 'Bilingual (EN/ZH)'],
+                recentActivity: [
+                    { date: '2024-08-12', description: 'Completed restocking at Toa Payoh Hub', type: 'completed' },
+                    { date: '2024-08-10', description: 'Booked maintenance check at Ang Mo Kio', type: 'booked' },
+                    { date: '2024-08-08', description: 'Completed deep cleaning at Jurong West', type: 'completed' }
+                ]
+            },
+            admin: {
+                name: 'Alex Wong',
+                email: 'alex.wong@cfsg.org',
+                phone: '+65 9234 5678',
+                joinDate: '2023-11-20',
+                role: 'Operations Manager',
+                permissions: ['manage_jobs', 'manage_volunteers', 'view_reports', 'system_admin'],
+                preferences: {
+                    notifications: true,
+                    emailReports: true,
+                    smsAlerts: true,
+                    darkMode: false,
+                    language: 'en'
+                },
+                teamSize: 24,
+                fridgesManaged: 5,
+                recentActivity: [
+                    { date: '2024-08-13', description: 'Created urgent restocking job for Clementi', type: 'created' },
+                    { date: '2024-08-12', description: 'Approved new volunteer: Maria Santos', type: 'approved' },
+                    { date: '2024-08-11', description: 'Generated weekly performance report', type: 'report' }
+                ],
+                systemAlerts: [
+                    { priority: 'high', message: 'Toa Payoh fridge temperature alert', time: '2 hours ago' },
+                    { priority: 'medium', message: 'Low volunteer availability this weekend', time: '5 hours ago' }
+                ]
+            }
+        };
+        let jobs = [
+            {
+                id: 1,
+                type: 'restock',
+                title: 'Fridge Restocking',
+                location: 'Toa Payoh Hub',
+                address: 'Block 190 Lorong 6 Toa Payoh',
+                datetime: '2024-08-14 09:00',
+                duration: 2,
+                priority: 'urgent',
+                status: 'available',
+                description: 'Urgent restocking needed. Fridge is running low on essentials.',
+                volunteer: null
+            },
+            {
+                id: 2,
+                type: 'maintenance',
+                title: 'Maintenance Check',
+                location: 'Ang Mo Kio Community',
+                address: 'Block 406 Ang Mo Kio Ave 10',
+                datetime: '2024-08-14 14:00',
+                duration: 1,
+                priority: 'normal',
+                status: 'available',
+                description: 'Monthly maintenance check and temperature monitoring.',
+                volunteer: null
+            },
+            {
+                id: 3,
+                type: 'cleaning',
+                title: 'Deep Cleaning',
+                location: 'Jurong West Street 42',
+                address: 'Block 420 Jurong West Street 42',
+                datetime: '2024-08-15 10:00',
+                duration: 3,
+                priority: 'normal',
+                status: 'booked',
+                description: 'Weekly deep cleaning and organization of fridge contents.',
+                volunteer: 'Sarah Tan'
+            },
+            {
+                id: 4,
+                type: 'inspection',
+                title: 'Safety Inspection',
+                location: 'Bedok North Community',
+                address: 'Block 538 Bedok North Street 3',
+                datetime: '2024-08-15 16:00',
+                duration: 1,
+                priority: 'normal',
+                status: 'available',
+                description: 'Quarterly safety inspection and compliance check.',
+                volunteer: null
+            },
+            {
+                id: 5,
+                type: 'restock',
+                title: 'Emergency Restock',
+                location: 'Clementi Avenue 2',
+                address: 'Block 312 Clementi Avenue 2',
+                datetime: '2024-08-14 11:00',
+                duration: 2,
+                priority: 'urgent',
+                status: 'available',
+                description: 'Emergency restock required due to high demand.',
+                volunteer: null
+            },
+            {
+                id: 6,
+                type: 'maintenance',
+                title: 'Temperature Check',
+                location: 'Toa Payoh Hub',
+                address: 'Block 190 Lorong 6 Toa Payoh',
+                datetime: '2024-08-16 09:00',
+                duration: 1,
+                priority: 'normal',
+                status: 'completed',
+                description: 'Temperature monitoring and calibration.',
+                volunteer: 'Alex Wong'
+            }
+        ];
+
+        let volunteers = [
+            { name: 'Sarah Tan', email: 'sarah.tan@email.com', completedJobs: 15, rating: 4.8 },
+            { name: 'Alex Wong', email: 'alex.wong@email.com', completedJobs: 12, rating: 4.9 },
+            { name: 'Maria Santos', email: 'maria.santos@email.com', completedJobs: 8, rating: 4.7 },
+            { name: 'David Lim', email: 'david.lim@email.com', completedJobs: 20, rating: 5.0 }
+        ];
+
+        // Initialize app
+        document.addEventListener('DOMContentLoaded', function() {
+            updateUI();
+            renderJobs();
+            renderMyJobs();
+            renderProfile();
+        });
+
+        function updateUI() {
+            const roleBadge = document.getElementById('role-badge');
+            const headerSubtitle = document.getElementById('header-subtitle');
+            const tabJobs = document.getElementById('tab-jobs');
+            const tabMyJobs = document.getElementById('tab-my-jobs');
+            const navJobs = document.getElementById('nav-jobs');
+            const navMyJobs = document.getElementById('nav-my-jobs');
+            const statsTitle = document.getElementById('stats-title');
+
+            if (currentRole === 'admin') {
+                roleBadge.textContent = 'Admin';
+                roleBadge.className = 'role-badge admin-badge';
+                headerSubtitle.textContent = 'Admin Portal';
+                tabJobs.textContent = 'Manage Jobs';
+                tabMyJobs.textContent = 'Volunteers';
+                navJobs.textContent = 'Manage';
+                navMyJobs.textContent = 'Team';
+                statsTitle.textContent = 'System Overview';
+            } else {
+                roleBadge.textContent = 'Volunteer';
+                roleBadge.className = 'role-badge volunteer-badge';
+                headerSubtitle.textContent = 'Volunteer Portal';
+                tabJobs.textContent = 'Available Jobs';
+                tabMyJobs.textContent = 'My Jobs';
+                navJobs.textContent = 'Jobs';
+                navMyJobs.textContent = 'My Jobs';
+                statsTitle.textContent = 'My Volunteer Stats';
+            }
+
+            updateStats();
+            renderProfile();
+        }
+
+        function updateStats() {
+            if (currentRole === 'admin') {
+                document.getElementById('available-jobs-count').textContent = jobs.filter(j => j.status === 'available').length;
+                document.getElementById('urgent-jobs-count').textContent = jobs.filter(j => j.priority === 'urgent' && j.status === 'available').length;
+                document.getElementById('completed-jobs').textContent = jobs.filter(j => j.status === 'completed').length;
+                document.getElementById('hours-volunteered').textContent = jobs.filter(j => j.status === 'completed').reduce((sum, job) => sum + job.duration, 0);
+                document.getElementById('fridges-helped').textContent = new Set(jobs.map(j => j.location)).size;
+                document.getElementById('community-impact').textContent = volunteers.reduce((sum, v) => sum + v.completedJobs, 0);
+            } else {
+                document.getElementById('available-jobs-count').textContent = jobs.filter(j => j.status === 'available').length;
+                document.getElementById('urgent-jobs-count').textContent = jobs.filter(j => j.priority === 'urgent' && j.status === 'available').length;
+                // Volunteer personal stats remain the same
+            }
+        }
+
+        function renderJobs() {
+            const jobList = document.getElementById('job-list');
+            let jobsToShow = currentRole === 'admin' ? jobs : jobs.filter(j => j.status === 'available');
+            
+            if (jobsToShow.length === 0) {
+                jobList.innerHTML = '<div style="text-align: center; padding: 40px; color: #666;">No jobs available at the moment.</div>';
+                return;
+            }
+
+            jobList.innerHTML = '';
+            jobsToShow.forEach(job => {
+                const statusClass = getStatusClass(job.status, job.priority);
+                const statusText = getStatusText(job.status, job.priority);
+                
+                const jobCard = document.createElement('div');
+                jobCard.className = 'job-card';
+                jobCard.onclick = () => openJobModal(job);
+                
+                jobCard.innerHTML = `
+                    <div class="job-header">
+                        <div class="job-title">${job.title}</div>
+                        <div class="job-status ${statusClass}">${statusText}</div>
+                    </div>
+                    <div class="job-details">
+                        📍 ${job.location}<br>
+                        ${job.address}<br>
+                        ${job.description}
+                    </div>
+                    <div class="job-meta">
+                        <span>⏰ ${formatDateTime(job.datetime)} (${job.duration}h)</span>
+                        ${job.volunteer ? `<span>👤 ${job.volunteer}</span>` : ''}
+                    </div>
+                `;
+                
+                jobList.appendChild(jobCard);
+            });
+
+            // Add create job button for admin
+            if (currentRole === 'admin') {
+                const createJobCard = document.createElement('div');
+                createJobCard.className = 'job-card';
+                createJobCard.style.background = 'linear-gradient(135deg, #51cf66, #40c057)';
+                createJobCard.style.color = 'white';
+                createJobCard.style.textAlign = 'center';
+                createJobCard.onclick = () => openCreateJobModal();
+                
+                createJobCard.innerHTML = `
+                    <div style="padding: 20px;">
+                        <div style="font-size: 24px; margin-bottom: 10px;">➕</div>
+                        <div style="font-size: 16px; font-weight: 600;">Create New Job</div>
+                        <div style="font-size: 14px; opacity: 0.9;">Post a new volunteer opportunity</div>
+                    </div>
+                `;
+                
+                jobList.appendChild(createJobCard);
+            }
+        }
+
+        function renderMyJobs() {
+            const myJobList = document.getElementById('my-job-list');
+            
+            if (currentRole === 'volunteer') {
+                // Show jobs booked by current volunteer
+                const myJobs = jobs.filter(j => j.volunteer === 'Current Volunteer' || (j.status === 'booked' && Math.random() > 0.5));
+                
+                if (myJobs.length === 0) {
+                    myJobList.innerHTML = '<div style="text-align: center; padding: 40px; color: #666;">You haven\'t booked any jobs yet.</div>';
+                    return;
+                }
+                
+                myJobList.innerHTML = '';
+                myJobs.forEach(job => {
+                    const statusClass = getStatusClass(job.status, job.priority);
+                    const statusText = getStatusText(job.status, job.priority);
+                    
+                    const jobCard = document.createElement('div');
+                    jobCard.className = 'job-card';
+                    jobCard.onclick = () => openJobModal(job);
+                    
+                    jobCard.innerHTML = `
+                        <div class="job-header">
+                            <div class="job-title">${job.title}</div>
+                            <div class="job-status ${statusClass}">${statusText}</div>
+                        </div>
+                        <div class="job-details">
+                            📍 ${job.location}<br>
+                            ${job.address}<br>
+                            ${job.description}
+                        </div>
+                        <div class="job-meta">
+                            <span>⏰ ${formatDateTime(job.datetime)} (${job.duration}h)</span>
+                        </div>
+                    `;
+                    
+                    myJobList.appendChild(jobCard);
+                });
+            } else {
+                // Show volunteers list for admin
+                myJobList.innerHTML = '';
+                
+                // Volunteers header
+                const headerCard = document.createElement('div');
+                headerCard.className = 'form-section';
+                headerCard.innerHTML = `
+                    <h2 style="font-size: 20px; font-weight: 600; color: #333; margin-bottom: 20px;">Active Volunteers</h2>
+                `;
+                myJobList.appendChild(headerCard);
+                
+                volunteers.forEach(volunteer => {
+                    const volunteerCard = document.createElement('div');
+                    volunteerCard.className = 'job-card';
+                    
+                    const currentJobs = jobs.filter(j => j.volunteer === volunteer.name && j.status !== 'completed').length;
+                    
+                    volunteerCard.innerHTML = `
+                        <div class="job-header">
+                            <div class="job-title">${volunteer.name}</div>
+                            <div class="job-status status-available">${volunteer.rating} ⭐</div>
+                        </div>
+                        <div class="job-details">
+                            📧 ${volunteer.email}<br>
+                            ✅ ${volunteer.completedJobs} jobs completed<br>
+                            🔄 ${currentJobs} active jobs
+                        </div>
+                        <div class="job-meta">
+                            <span>Active Volunteer</span>
+                        </div>
+                    `;
+                    
+                    myJobList.appendChild(volunteerCard);
+                });
+            }
+        }
+
+        function getStatusClass(status, priority) {
+            if (priority === 'urgent') return 'status-urgent';
+            switch (status) {
+                case 'available': return 'status-available';
+                case 'booked': return 'status-booked';
+                case 'completed': return 'status-completed';
+                default: return 'status-available';
+            }
+        }
+
+        function getStatusText(status, priority) {
+            if (priority === 'urgent' && status === 'available') return 'URGENT';
+            switch (status) {
+                case 'available': return 'Available';
+                case 'booked': return 'Booked';
+                case 'completed': return 'Completed';
+                default: return 'Available';
+            }
+        }
+
+        function formatDateTime(datetime) {
+            const date = new Date(datetime);
+            const options = { 
+                weekday: 'short', 
+                month: 'short', 
+                day: 'numeric', 
+                hour: 'numeric', 
+                minute: '2-digit',
+                hour12: true 
+            };
+            return date.toLocaleDateString('en-US', options);
+        }
+
+        function showTab(tabName) {
+            // Update nav items
+            document.querySelectorAll('.nav-item').forEach(item => item.classList.remove('active'));
+            event.target.classList.add('active');
+            
+            // Update tabs
+            document.querySelectorAll('.nav-tab').forEach(tab => tab.classList.remove('active'));
+            document.querySelectorAll('.tab-content').forEach(content => content.classList.remove('active'));
+            
+            const tabButton = document.querySelector(`[onclick="showTab('${tabName}')"]`);
+            if (tabButton && tabButton.classList.contains('nav-tab')) {
+                tabButton.classList.add('active');
+            }
+            
+            document.getElementById(`${tabName}-tab`).classList.add('active');
+            
+            // Refresh content
+            if (tabName === 'jobs') renderJobs();
+            if (tabName === 'my-jobs') renderMyJobs();
+            if (tabName === 'profile') renderProfile();
+        }
+
+        function switchRole() {
+            currentRole = currentRole === 'volunteer' ? 'admin' : 'volunteer';
+            updateUI();
+            renderJobs();
+            renderMyJobs();
+            
+            // Show current tab
+            const activeTab = document.querySelector('.tab-content.active').id.replace('-tab', '');
+            showTab(activeTab);
+        }
+
+        function openJobModal(job) {
+            currentModal = job;
+            const modal = document.getElementById('job-modal');
+            const title = document.getElementById('modal-title');
+            const body = document.getElementById('modal-body');
+            const actionBtn = document.getElementById('modal-action-btn');
+            
+            title.textContent = job.title;
+            
+            body.innerHTML = `
+                <div style="margin-bottom: 16px;">
+                    <strong>📍 Location:</strong> ${job.location}<br>
+                    <span style="color: #666; font-size: 14px;">${job.address}</span>
+                </div>
+                <div style="margin-bottom: 16px;">
+                    <strong>⏰ Date & Time:</strong> ${formatDateTime(job.datetime)}<br>
+                    <strong>⌛ Duration:</strong> ${job.duration} hour(s)
+                </div>
+                <div style="margin-bottom: 16px;">
+                    <strong>📋 Description:</strong><br>
+                    ${job.description}
+                </div>
+                <div style="margin-bottom: 16px;">
+                    <strong>🔥 Priority:</strong> ${job.priority === 'urgent' ? '🚨 URGENT' : '📅 Normal'}
+                </div>
+                ${job.volunteer ? `<div style="margin-bottom: 16px;"><strong>👤 Assigned to:</strong> ${job.volunteer}</div>` : ''}
+            `;
+            
+            // Configure action button based on role and job status
+            if (currentRole === 'volunteer') {
+                if (job.status === 'available') {
+                    actionBtn.textContent = 'Book This Job';
+                    actionBtn.className = 'btn btn-success';
+                } else if (job.volunteer === 'Current Volunteer') {
+                    if (job.status === 'booked') {
+                        actionBtn.textContent = 'Mark Complete';
+                        actionBtn.className = 'btn btn-success';
+                    } else {
+                        actionBtn.textContent = 'View Details';
+                        actionBtn.className = 'btn btn-secondary';
+                    }
+                } else {
+                    actionBtn.textContent = 'View Details';
+                    actionBtn.className = 'btn btn-secondary';
+                }
+            } else {
+                // Admin actions
+                if (job.status === 'available') {
+                    actionBtn.textContent = 'Edit Job';
+                    actionBtn.className = 'btn btn-primary';
+                } else if (job.status === 'booked') {
+                    actionBtn.textContent = 'Contact Volunteer';
+                    actionBtn.className = 'btn btn-primary';
+                } else {
+                    actionBtn.textContent = 'View Report';
+                    actionBtn.className = 'btn btn-secondary';
+                }
+            }
+            
+            modal.style.display = 'flex';
+        }
+
+        function performModalAction() {
+            if (!currentModal) return;
+            
+            const job = currentModal;
+            
+            if (currentRole === 'volunteer') {
+                if (job.status === 'available') {
+                    // Book the job
+                    job.status = 'booked';
+                    job.volunteer = 'Current Volunteer';
+                    alert('Job booked successfully! Check "My Jobs" for details.');
+                } else if (job.volunteer === 'Current Volunteer' && job.status === 'booked') {
+                    // Mark complete
+                    job.status = 'completed';
+                    alert('Job marked as completed! Thank you for your service.');
+                }
+            } else {
+                // Admin actions
+                if (job.status === 'available') {
+                    alert('Edit job functionality would open here.');
+                } else if (job.status === 'booked') {
+                    alert(`Contacting ${job.volunteer} at their registered email...`);
+                } else {
+                    alert('Job completion report would be displayed here.');
+                }
+            }
+            
+            closeModal();
+            updateUI();
+            renderJobs();
+            renderMyJobs();
+        }
+
+        function closeModal() {
+            document.getElementById('job-modal').style.display = 'none';
+            currentModal = null;
+        }
+
+        function openCreateJobModal() {
+            document.getElementById('create-job-modal').style.display = 'flex';
+            
+            // Set default datetime to tomorrow
+            const tomorrow = new Date();
+            tomorrow.setDate(tomorrow.getDate() + 1);
+            tomorrow.setHours(9, 0, 0, 0);
+            document.getElementById('create-job-datetime').value = tomorrow.toISOString().slice(0, 16);
+        }
+
+        function closeCreateJobModal() {
+            document.getElementById('create-job-modal').style.display = 'none';
+        }
+
+        function createJob() {
+            const type = document.getElementById('create-job-type').value;
+            const location = document.getElementById('create-job-location').value;
+            const datetime = document.getElementById('create-job-datetime').value;
+            const duration = parseInt(document.getElementById('create-job-duration').value);
+            const priority = document.getElementById('create-job-priority').value;
+            const description = document.getElementById('create-job-description').value;
+            
+            if (!datetime) {
+                alert('Please select a date and time for the job.');
+                return;
+            }
+            
+            // Get address for location
+            const addresses = {
+                'Toa Payoh Hub': 'Block 190 Lorong 6 Toa Payoh',
+                'Ang Mo Kio Community': 'Block 406 Ang Mo Kio Ave 10',
+                'Jurong West Street 42': 'Block 420 Jurong West Street 42',
+                'Bedok North Community': 'Block 538 Bedok North Street 3',
+                'Clementi Avenue 2': 'Block 312 Clementi Avenue 2'
+            };
+            
+            const newJob = {
+                id: jobs.length + 1,
+                type: type,
+                title: type === 'restock' ? 'Fridge Restocking' :
+                       type === 'maintenance' ? 'Maintenance Check' :
+                       type === 'cleaning' ? 'Cleaning & Organization' : 'Safety Inspection',
+                location: location,
+                address: addresses[location],
+                datetime: datetime,
+                duration: duration,
+                priority: priority,
+                status: 'available',
+                description: description || `${type.charAt(0).toUpperCase() + type.slice(1)} task at ${location}`,
+                volunteer: null
+            };
+            
+            jobs.unshift(newJob); // Add to beginning of array
+            
+            closeCreateJobModal();
+            alert('New job created successfully!');
+            
+            updateUI();
+            renderJobs();
+        }
+
+        function renderProfile() {
+            const profileContent = document.getElementById('profile-content');
+            const profile = userProfile[currentRole];
+            
+            if (currentRole === 'volunteer') {
+                profileContent.innerHTML = `
+                    <!-- Profile Header -->
+                    <div class="profile-header">
+                        <div class="profile-avatar">👤</div>
+                        <div class="profile-name">${profile.name}</div>
+                        <div class="profile-role">Community Volunteer</div>
+                        <div style="margin-top: 10px; opacity: 0.9;">
+                            ⭐ ${profile.rating}/5.0 Rating • ${profile.completedJobs} Jobs Completed
+                        </div>
+                    </div>
+
+                    <!-- Personal Information -->
+                    <div class="profile-section">
+                        <h3>📋 Personal Information</h3>
+                        <div class="settings-item">
+                            <span class="settings-label">Full Name</span>
+                            <span class="settings-value">${profile.name}</span>
+                        </div>
+                        <div class="settings-item">
+                            <span class="settings-label">Email</span>
+                            <span class="settings-value">${profile.email}</span>
+                        </div>
+                        <div class="settings-item">
+                            <span class="settings-label">Phone</span>
+                            <span class="settings-value">${profile.phone}</span>
+                        </div>
+                        <div class="settings-item">
+                            <span class="settings-label">Member Since</span>
+                            <span class="settings-value">${new Date(profile.joinDate).toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' })}</span>
+                        </div>
+                        <div class="settings-item">
+                            <span class="settings-label">Emergency Contact</span>
+                            <span class="settings-value">${profile.emergencyContact}</span>
+                        </div>
+                    </div>
+
+                    <!-- Skills & Certifications -->
+                    <div class="profile-section">
+                        <h3>🎖️ Skills & Certifications</h3>
+                        <div style="margin-bottom: 16px;">
+                            ${profile.skills.map(skill => `<span class="achievement-badge">${skill}</span>`).join('')}
+                        </div>
+                        <button class="btn btn-secondary" onclick="addSkill()">+ Add Skill</button>
+                    </div>
+
+                    <!-- Achievements -->
+                    <div class="profile-section">
+                        <h3>🏆 Achievements</h3>
+                        <div style="margin-bottom: 16px;">
+                            ${profile.badges.map(badge => `<span class="achievement-badge">🏅 ${badge}</span>`).join('')}
+                        </div>
+                    </div>
+
+                    <!-- Availability -->
+                    <div class="profile-section">
+                        <h3>📅 Availability Preferences</h3>
+                        <p style="color: #666; font-size: 14px; margin-bottom: 16px;">Select your preferred volunteer times:</p>
+                        <div id="availability-slots">
+                            ${['Monday Morning', 'Monday Evening', 'Tuesday Morning', 'Tuesday Evening', 
+                              'Wednesday Morning', 'Wednesday Evening', 'Thursday Morning', 'Thursday Evening',
+                              'Friday Morning', 'Friday Evening', 'Saturday Morning', 'Saturday Afternoon', 
+                              'Sunday Morning', 'Sunday Afternoon'].map(slot => `
+                                <div class="availability-slot ${profile.availability.includes(slot) ? 'selected' : ''}" 
+                                     onclick="toggleAvailability('${slot}')">
+                                    ${slot}
+                                </div>
+                            `).join('')}
+                        </div>
+                    </div>
+
+                    <!-- Notification Preferences -->
+                    <div class="profile-section">
+                        <h3>🔔 Notification Preferences</h3>
+                        <div class="settings-item">
+                            <span class="settings-label">Push Notifications</span>
+                            <div class="toggle-switch ${profile.preferences.notifications ? 'active' : ''}" 
+                                 onclick="togglePreference('notifications')"></div>
+                        </div>
+                        <div class="settings-item">
+                            <span class="settings-label">Email Updates</span>
+                            <div class="toggle-switch ${profile.preferences.emailUpdates ? 'active' : ''}" 
+                                 onclick="togglePreference('emailUpdates')"></div>
+                        </div>
+                        <div class="settings-item">
+                            <span class="settings-label">SMS Alerts</span>
+                            <div class="toggle-switch ${profile.preferences.smsAlerts ? 'active' : ''}" 
+                                 onclick="togglePreference('smsAlerts')"></div>
+                        </div>
+                        <div class="settings-item">
+                            <span class="settings-label">Dark Mode</span>
+                            <div class="toggle-switch ${profile.preferences.darkMode ? 'active' : ''}" 
+                                 onclick="togglePreference('darkMode')"></div>
+                        </div>
+                    </div>
+
+                    <!-- Recent Activity -->
+                    <div class="profile-section">
+                        <h3>📈 Recent Activity</h3>
+                        ${profile.recentActivity.map(activity => `
+                            <div class="recent-activity">
+                                <div class="activity-date">${new Date(activity.date).toLocaleDateString()}</div>
+                                <div class="activity-description">
+                                    ${activity.type === 'completed' ? '✅' : activity.type === 'booked' ? '📅' : '📋'} 
+                                    ${activity.description}
+                                </div>
+                            </div>
+                        `).join('')}
+                    </div>
+
+                    <!-- Account Actions -->
+                    <div class="profile-section">
+                        <h3>⚙️ Account Settings</h3>
+                        <button class="btn btn-primary btn-full" onclick="editProfile()">Edit Profile</button>
+                        <button class="btn btn-secondary btn-full" onclick="exportData()">Export My Data</button>
+                        <button class="btn btn-secondary btn-full" onclick="contactSupport()">Contact Support</button>
+                        <button class="btn btn-danger btn-full" onclick="logout()">Logout</button>
+                    </div>
+                `;
+            } else {
+                // Admin Profile
+                profileContent.innerHTML = `
+                    <!-- Profile Header -->
+                    <div class="profile-header">
+                        <div class="profile-avatar">👨‍💼</div>
+                        <div class="profile-name">${profile.name}</div>
+                        <div class="profile-role">${profile.role}</div>
+                        <div style="margin-top: 10px; opacity: 0.9;">
+                            Managing ${profile.teamSize} volunteers • ${profile.fridgesManaged} locations
+                        </div>
+                    </div>
+
+                    <!-- Personal Information -->
+                    <div class="profile-section">
+                        <h3>📋 Admin Information</h3>
+                        <div class="settings-item">
+                            <span class="settings-label">Full Name</span>
+                            <span class="settings-value">${profile.name}</span>
+                        </div>
+                        <div class="settings-item">
+                            <span class="settings-label">Email</span>
+                            <span class="settings-value">${profile.email}</span>
+                        </div>
+                        <div class="settings-item">
+                            <span class="settings-label">Phone</span>
+                            <span class="settings-value">${profile.phone}</span>
+                        </div>
+                        <div class="settings-item">
+                            <span class="settings-label">Role</span>
+                            <span class="settings-value">${profile.role}</span>
+                        </div>
+                        <div class="settings-item">
+                            <span class="settings-label">Admin Since</span>
+                            <span class="settings-value">${new Date(profile.joinDate).toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' })}</span>
+                        </div>
+                    </div>
+
+                    <!-- Permissions -->
+                    <div class="profile-section">
+                        <h3>🔐 Admin Permissions</h3>
+                        <div style="margin-bottom: 16px;">
+                            ${profile.permissions.map(permission => 
+                                `<span class="achievement-badge">🔑 ${permission.replace('_', ' ').replace(/\b\w/g, l => l.toUpperCase())}</span>`
+                            ).join('')}
+                        </div>
+                    </div>
+
+                    <!-- System Alerts -->
+                    <div class="profile-section">
+                        <h3>🚨 System Alerts</h3>
+                        ${profile.systemAlerts.map(alert => `
+                            <div class="recent-activity">
+                                <div class="activity-date">${alert.time}</div>
+                                <div class="activity-description">
+                                    ${alert.priority === 'high' ? '🔴' : alert.priority === 'medium' ? '🟡' : '🟢'} 
+                                    ${alert.message}
+                                </div>
+                            </div>
+                        `).join('')}
+                    </div>
+
+                    <!-- Team Management -->
+                    <div class="profile-section">
+                        <h3>👥 Team Overview</h3>
+                        <div class="stats-grid" style="margin-bottom: 16px;">
+                            <div class="stat-card" style="background: linear-gradient(135deg, #51cf66, #40c057);">
+                                <div class="stat-number">${profile.teamSize}</div>
+                                <div class="stat-label">Active Volunteers</div>
+                            </div>
+                            <div class="stat-card" style="background: linear-gradient(135deg, #4facfe, #00f2fe);">
+                                <div class="stat-number">${profile.fridgesManaged}</div>
+                                <div class="stat-label">Locations</div>
+                            </div>
+                        </div>
+                        <button class="btn btn-primary btn-full" onclick="viewTeamDetails()">View Team Details</button>
+                    </div>
+
+                    <!-- System Preferences -->
+                    <div class="profile-section">
+                        <h3>🔔 Admin Preferences</h3>
+                        <div class="settings-item">
+                            <span class="settings-label">System Notifications</span>
+                            <div class="toggle-switch ${profile.preferences.notifications ? 'active' : ''}" 
+                                 onclick="toggleAdminPreference('notifications')"></div>
+                        </div>
+                        <div class="settings-item">
+                            <span class="settings-label">Daily Email Reports</span>
+                            <div class="toggle-switch ${profile.preferences.emailReports ? 'active' : ''}" 
+                                 onclick="toggleAdminPreference('emailReports')"></div>
+                        </div>
+                        <div class="settings-item">
+                            <span class="settings-label">Emergency SMS</span>
+                            <div class="toggle-switch ${profile.preferences.smsAlerts ? 'active' : ''}" 
+                                 onclick="toggleAdminPreference('smsAlerts')"></div>
+                        </div>
+                        <div class="settings-item">
+                            <span class="settings-label">Dark Mode</span>
+                            <div class="toggle-switch ${profile.preferences.darkMode ? 'active' : ''}" 
+                                 onclick="toggleAdminPreference('darkMode')"></div>
+                        </div>
+                    </div>
+
+                    <!-- Recent Activity -->
+                    <div class="profile-section">
+                        <h3>📈 Recent Admin Activity</h3>
+                        ${profile.recentActivity.map(activity => `
+                            <div class="recent-activity">
+                                <div class="activity-date">${new Date(activity.date).toLocaleDateString()}</div>
+                                <div class="activity-description">
+                                    ${activity.type === 'created' ? '➕' : activity.type === 'approved' ? '✅' : '📊'} 
+                                    ${activity.description}
+                                </div>
+                            </div>
+                        `).join('')}
+                    </div>
+
+                    <!-- Admin Actions -->
+                    <div class="profile-section">
+                        <h3>⚙️ Admin Settings</h3>
+                        <button class="btn btn-primary btn-full" onclick="editAdminProfile()">Edit Profile</button>
+                        <button class="btn btn-secondary btn-full" onclick="managePermissions()">Manage Permissions</button>
+                        <button class="btn btn-secondary btn-full" onclick="systemSettings()">System Settings</button>
+                        <button class="btn btn-secondary btn-full" onclick="generateReport()">Generate Reports</button>
+                        <button class="btn btn-danger btn-full" onclick="logout()">Logout</button>
+                    </div>
+                `;
+            }
+        }
+
+        // Profile interaction functions
+        function toggleAvailability(slot) {
+            const profile = userProfile.volunteer;
+            const index = profile.availability.indexOf(slot);
+            
+            if (index > -1) {
+                profile.availability.splice(index, 1);
+            } else {
+                profile.availability.push(slot);
+            }
+            
+            renderProfile();
+        }
+
+        function togglePreference(pref) {
+            userProfile.volunteer.preferences[pref] = !userProfile.volunteer.preferences[pref];
+            renderProfile();
+        }
+
+        function toggleAdminPreference(pref) {
+            userProfile.admin.preferences[pref] = !userProfile.admin.preferences[pref];
+            renderProfile();
+        }
+
+        function addSkill() {
+            const skill = prompt('Enter a new skill or certification:');
+            if (skill && skill.trim()) {
+                userProfile.volunteer.skills.push(skill.trim());
+                renderProfile();
+            }
+        }
+
+        function editProfile() {
+            alert('Profile editing functionality would open a detailed form here.');
+        }
+
+        function editAdminProfile() {
+            alert('Admin profile editing would open administrative settings here.');
+        }
+
+        function exportData() {
+            alert('Your volunteer data would be exported as a PDF or JSON file.');
+        }
+
+        function contactSupport() {
+            alert('Opening support chat or email form...');
+        }
+
+        function viewTeamDetails() {
+            alert('Team management interface would open here with detailed volunteer information.');
+        }
+
+        function managePermissions() {
+            alert('Permission management interface for admin roles would open here.');
+        }
+
+        function systemSettings() {
+            alert('System-wide configuration settings would be accessible here.');
+        }
+
+        function generateReport() {
+            alert('Report generation interface would open here with various report options.');
+        }
+
+        function logout() {
+            if (confirm('Are you sure you want to logout?')) {
+                alert('Logging out... Redirecting to login page.');
+                // In real app, would redirect to auth page
+            }
+        }
+
+        // Add some demo interactions
+        function simulateRealTimeUpdates() {
+            setInterval(() => {
+                // Randomly update job statuses for demo purposes
+                const availableJobs = jobs.filter(j => j.status === 'available');
+                if (availableJobs.length > 0 && Math.random() > 0.95) {
+                    const randomJob = availableJobs[Math.floor(Math.random() * availableJobs.length)];
+                    const randomVolunteer = volunteers[Math.floor(Math.random() * volunteers.length)];
+                    
+                    randomJob.status = 'booked';
+                    randomJob.volunteer = randomVolunteer.name;
+                    
+                    updateUI();
+                    
+                    // Only re-render if we're on the jobs tab
+                    if (document.getElementById('jobs-tab').classList.contains('active')) {
+                        renderJobs();
+                    }
+                }
+            }, 30000); // Check every 30 seconds
+        }
+
+        // Start demo updates
+        simulateRealTimeUpdates();
+
+        // Keyboard shortcuts for demo
+        document.addEventListener('keydown', function(e) {
+            if (e.ctrlKey || e.metaKey) {
+                switch(e.key) {
+                    case '1':
+                        e.preventDefault();
+                        showTab('jobs');
+                        break;
+                    case '2':
+                        e.preventDefault();
+                        showTab('my-jobs');
+                        break;
+                    case '3':
+                        e.preventDefault();
+                        showTab('stats');
+                        break;
+                    case 'r':
+                        e.preventDefault();
+                        switchRole();
+                        break;
+                }
+            }
+        });
+
+        // Close modals when clicking outside
+        document.getElementById('job-modal').addEventListener('click', function(e) {
+            if (e.target === this) {
+                closeModal();
+            }
+        });
+
+        document.getElementById('create-job-modal').addEventListener('click', function(e) {
+            if (e.target === this) {
+                closeCreateJobModal();
+            }
+        });
+    </script>
+</body>
+</html>
