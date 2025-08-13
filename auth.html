@@ -1,0 +1,104 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sign In / Sign Up - Community Fridges SG</title>
+    <link rel="stylesheet" href="https://unpkg.com/leaflet/dist/leaflet.css" />
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); min-height: 100vh; overflow-x: hidden; }
+        .mobile-container { max-width: 375px; margin: 0 auto; background: white; min-height: 100vh; position: relative; box-shadow: 0 0 30px rgba(0,0,0,0.3); }
+        .header { background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%); color: white; padding: 20px; text-align: center; position: relative; }
+        .header h1 { font-size: 24px; font-weight: 700; margin-bottom: 5px; }
+        .header p { opacity: 0.9; font-size: 14px; }
+        .auth-section { padding: 32px 20px 0 20px; }
+        .auth-title { font-size: 20px; font-weight: 600; color: #333; margin-bottom: 18px; text-align: center; }
+        .form-group { margin-bottom: 20px; }
+        .form-label { font-size: 14px; font-weight: 600; color: #333; margin-bottom: 8px; display: block; }
+        .form-input { width: 100%; padding: 12px 16px; border: 2px solid #e0e0e0; border-radius: 12px; font-size: 16px; transition: border-color 0.3s ease; }
+        .form-input:focus { outline: none; border-color: #4facfe; }
+        .btn-primary { width: 100%; padding: 16px; background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%); color: white; border: none; border-radius: 12px; font-size: 16px; font-weight: 600; cursor: pointer; transition: all 0.3s ease; margin-bottom: 12px; }
+        .btn-primary:hover { transform: translateY(-1px); box-shadow: 0 4px 15px rgba(79, 172, 254, 0.3); }
+        .auth-switch { text-align: center; margin-top: 12px; color: #4facfe; cursor: pointer; font-size: 15px; }
+        .auth-switch:hover { text-decoration: underline; }
+        .error-msg { color: #ff6b6b; font-size: 14px; margin-bottom: 10px; text-align: center; }
+    </style>
+</head>
+<body>
+    <div class="mobile-container">
+        <div class="header">
+            <h1>Community Fridges SG</h1>
+            <p>Sign In / Sign Up</p>
+        </div>
+        <div class="auth-section" id="auth-section">
+            <!-- Auth forms will be rendered here -->
+        </div>
+    </div>
+    <script>
+        function renderSignIn() {
+            document.getElementById('auth-section').innerHTML = `
+                <div class='auth-title'>Sign In</div>
+                <div class='error-msg' id='signin-error'></div>
+                <div class='form-group'>
+                    <label class='form-label'>Email</label>
+                    <input type='email' class='form-input' id='signin-email' placeholder='Enter your email'>
+                </div>
+                <div class='form-group'>
+                    <label class='form-label'>Password</label>
+                    <input type='password' class='form-input' id='signin-password' placeholder='Enter your password'>
+                </div>
+                <button class='btn-primary' onclick='signIn()'>Sign In</button>
+                <div class='auth-switch' onclick='renderSignUp()'>Don't have an account? Sign Up</div>
+            `;
+        }
+        function renderSignUp() {
+            document.getElementById('auth-section').innerHTML = `
+                <div class='auth-title'>Sign Up</div>
+                <div class='error-msg' id='signup-error'></div>
+                <div class='form-group'>
+                    <label class='form-label'>Name</label>
+                    <input type='text' class='form-input' id='signup-name' placeholder='Enter your name'>
+                </div>
+                <div class='form-group'>
+                    <label class='form-label'>Email</label>
+                    <input type='email' class='form-input' id='signup-email' placeholder='Enter your email'>
+                </div>
+                <div class='form-group'>
+                    <label class='form-label'>Password</label>
+                    <input type='password' class='form-input' id='signup-password' placeholder='Create a password'>
+                </div>
+                <button class='btn-primary' onclick='signUp()'>Sign Up</button>
+                <div class='auth-switch' onclick='renderSignIn()'>Already have an account? Sign In</div>
+            `;
+        }
+        function signIn() {
+            var email = document.getElementById('signin-email').value.trim();
+            var password = document.getElementById('signin-password').value.trim();
+            var error = document.getElementById('signin-error');
+            if (!email || !password) {
+                error.textContent = 'Please enter both email and password.';
+                return;
+            }
+            error.textContent = '';
+            alert('Signed in! (Simulation)');
+            window.location.href = 'index.html';
+        }
+        function signUp() {
+            var name = document.getElementById('signup-name').value.trim();
+            var email = document.getElementById('signup-email').value.trim();
+            var password = document.getElementById('signup-password').value.trim();
+            var error = document.getElementById('signup-error');
+            if (!name || !email || !password) {
+                error.textContent = 'Please fill in all fields.';
+                return;
+            }
+            error.textContent = '';
+            alert('Account created! (Simulation)');
+            window.location.href = 'index.html';
+        }
+        // Initial render
+        renderSignIn();
+    </script>
+</body>
+</html>

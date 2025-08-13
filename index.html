@@ -4,6 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Community Fridges SG</title>
+    <link rel="stylesheet" href="https://unpkg.com/leaflet/dist/leaflet.css" />
     <style>
         * {
             margin: 0;
@@ -116,16 +117,9 @@
             overflow: hidden;
         }
 
-        .map-placeholder {
-            width: 100%;
+        #leaflet-map {
             height: 100%;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-size: 16px;
-            color: #666;
-            background: url('data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><circle cx="20" cy="30" r="3" fill="%234facfe"/><circle cx="60" cy="20" r="3" fill="%23ff6b6b"/><circle cx="40" cy="50" r="3" fill="%234ecdc4"/><circle cx="70" cy="60" r="3" fill="%23ffe66d"/><circle cx="30" cy="70" r="3" fill="%23a8e6cf"/></svg>');
-            background-size: cover;
+            width: 100%;
         }
 
         /* Quick Stats */
@@ -384,7 +378,158 @@
             color: #666;
             margin-top: 4px;
         }
+
+        .faq-list { margin-top: 20px; }
+        .faq-item { margin-bottom: 16px; }
+        .faq-question {
+            width: 100%;
+            background: #f8f9fa;
+            border: none;
+            padding: 12px 16px;
+            font-size: 16px;
+            font-weight: 600;
+            text-align: left;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: background 0.2s;
+        }
+        .faq-question:hover { background: #e3f2fd; }
+        .faq-answer {
+            display: none;
+            background: #fff;
+            padding: 12px 16px;
+            border-radius: 8px;
+            margin-top: 4px;
+            font-size: 15px;
+            color: #333;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.04);
+        }
+        .faq-item.active .faq-answer { display: block; }
+
+        /* Help Chat Modal */
+        #helpChat {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100vw;
+            height: 100vh;
+            background: rgba(0,0,0,0.7);
+            z-index: 999;
+            align-items: center;
+            justify-content: center;
+        }
+
+        #helpChat .modal-content {
+            background: #fff;
+            border-radius: 16px;
+            padding: 24px;
+            max-width: 340px;
+            margin: auto;
+            position: relative;
+            height: 400px;
+            display: flex;
+            flex-direction: column;
+        }
+
+        #helpChat h2 {
+            margin-bottom: 16px;
+            font-size: 20px;
+        }
+
+        #chatMessages {
+            flex: 1;
+            overflow-y: auto;
+            background: #f8f9fa;
+            border-radius: 8px;
+            padding: 10px;
+            margin-bottom: 10px;
+            font-size: 15px;
+        }
+
+        #chatInput {
+            width: 100%;
+            padding: 8px;
+            border-radius: 8px;
+            border: 1px solid #e0e0e0;
+            margin-bottom: 8px;
+        }
+
+        #chatSend {
+            width: 100%;
+            padding: 10px;
+            border: none;
+            background: #4facfe;
+            color: #fff;
+            border-radius: 8px;
+            font-size: 16px;
+        }
+
+        #chatClose {
+            margin-top: 8px;
+            width: 100%;
+            padding: 8px;
+            border: none;
+            background: #ff6b6b;
+            color: #fff;
+            border-radius: 8px;
+            font-size: 15px;
+        }
+
+        /* Dark Theme Styles */
+        #dark-theme-style {
+            /* Default dark theme styles */
+            background-color: #121212;
+            color: #e0e0e0;
+        }
+
+        #dark-theme-style body {
+            background-color: #121212;
+            color: #e0e0e0;
+        }
+
+        #dark-theme-style .mobile-container {
+            background-color: #1e1e1e;
+            color: #e0e0e0;
+        }
+
+        #dark-theme-style .nav-tabs, #dark-theme-style .bottom-nav {
+            background-color: #1e1e1e;
+            color: #e0e0e0;
+        }
+
+        #dark-theme-style .tab-content, #dark-theme-style .form-section, #dark-theme-style .fridge-card, #dark-theme-style .fridge-header, #dark-theme-style .fridge-title, #dark-theme-style .stat-card, #dark-theme-style .impact-card, #dark-theme-style .faq-list, #dark-theme-style .faq-question, #dark-theme-style .faq-answer, #dark-theme-style .faq-item.active .faq-answer {
+            background-color: #2c2c2c;
+            color: #e0e0e0;
+        }
+
+        #dark-theme-style .btn-primary {
+            background: linear-gradient(135deg, #0072ff, #00c6ff);
+        }
+
+        #dark-theme-style .status-active {
+            background: #2d2d2d;
+            color: #4caf50;
+        }
+
+        #dark-theme-style .status-needs {
+            background: #2d2d2d;
+            color: #ff9800;
+        }
+
+        #dark-theme-style a {
+            color: #bbdefb;
+        }
+
+        #dark-theme-style h1, #dark-theme-style h2, #dark-theme-style h3, #dark-theme-style h4, #dark-theme-style h5, #dark-theme-style h6 {
+            color: #e0e0e0;
+        }
+
+        #dark-theme-style .nav-label, #dark-theme-style .nav-icon {
+            color: #eee !important;
+        }
     </style>
+    <style id="dark-theme-style"></style>
 </head>
 <body>
     <div class="mobile-container">
@@ -401,9 +546,8 @@
         </div>
 
         <!-- Navigation Tabs -->
-        <div class="nav-tabs">
+        <div class="nav-tabs" id="main-tabs">
             <button class="nav-tab active" onclick="showTab('map')">Map</button>
-            <button class="nav-tab" onclick="showTab('list')">Fridges</button>
             <button class="nav-tab" onclick="showTab('donate')">Donate</button>
             <button class="nav-tab" onclick="showTab('analytics')">Impact</button>
         </div>
@@ -413,15 +557,11 @@
             <!-- Map Tab -->
             <div class="tab-content active" id="map-tab">
                 <div class="map-container">
-                    <div class="map-placeholder">
-                        🗺️ Interactive Map<br>
-                        <small>Community Fridges Locations</small>
-                    </div>
+                    <div id="leaflet-map" style="height: 250px; width: 100%;"></div>
                 </div>
-                
                 <div class="stats-grid">
                     <div class="stat-card">
-                        <div class="stat-number">42</div>
+                        <div class="stat-number" id="fridge-count">5</div>
                         <div class="stat-label">Active Fridges</div>
                     </div>
                     <div class="stat-card">
@@ -429,73 +569,7 @@
                         <div class="stat-label">Meals Shared</div>
                     </div>
                 </div>
-
-                <div class="fridge-list">
-                    <div class="fridge-card">
-                        <div class="fridge-header">
-                            <div class="fridge-title">Toa Payoh Hub</div>
-                            <div class="status-badge status-active">Active</div>
-                        </div>
-                        <div class="fridge-details">
-                            Block 190 Lorong 6 Toa Payoh<br>
-                            Last restocked: 2 hours ago
-                        </div>
-                        <div class="fridge-distance">📍 0.3 km away</div>
-                    </div>
-
-                    <div class="fridge-card">
-                        <div class="fridge-header">
-                            <div class="fridge-title">Ang Mo Kio Community</div>
-                            <div class="status-badge status-needs">Needs Items</div>
-                        </div>
-                        <div class="fridge-details">
-                            Block 406 Ang Mo Kio Ave 10<br>
-                            Last restocked: 1 day ago
-                        </div>
-                        <div class="fridge-distance">📍 1.2 km away</div>
-                    </div>
-                </div>
-            </div>
-
-            <!-- Fridges List Tab -->
-            <div class="tab-content" id="list-tab">
-                <div class="fridge-list">
-                    <div class="fridge-card">
-                        <div class="fridge-header">
-                            <div class="fridge-title">Jurong West Street 42</div>
-                            <div class="status-badge status-active">Well Stocked</div>
-                        </div>
-                        <div class="fridge-details">
-                            Block 420 Jurong West Street 42<br>
-                            Fresh vegetables, canned goods available
-                        </div>
-                        <div class="fridge-distance">📍 2.1 km away</div>
-                    </div>
-
-                    <div class="fridge-card">
-                        <div class="fridge-header">
-                            <div class="fridge-title">Bedok North Community</div>
-                            <div class="status-badge status-needs">Low Stock</div>
-                        </div>
-                        <div class="fridge-details">
-                            Block 538 Bedok North Street 3<br>
-                            Mostly empty, needs restocking
-                        </div>
-                        <div class="fridge-distance">📍 3.5 km away</div>
-                    </div>
-
-                    <div class="fridge-card">
-                        <div class="fridge-header">
-                            <div class="fridge-title">Clementi Avenue 2</div>
-                            <div class="status-badge status-active">Active</div>
-                        </div>
-                        <div class="fridge-details">
-                            Block 312 Clementi Avenue 2<br>
-                            Rice, instant noodles, fruits available
-                        </div>
-                        <div class="fridge-distance">📍 4.2 km away</div>
-                    </div>
-                </div>
+                <div class="fridge-list" id="fridge-list"></div>
             </div>
 
             <!-- Donate Tab -->
@@ -510,6 +584,8 @@
                             <option>Toa Payoh Hub - 0.3km</option>
                             <option>Ang Mo Kio Community - 1.2km</option>
                             <option>Jurong West Street 42 - 2.1km</option>
+                            <option>Bedok North Community - 3.5km</option>
+                            <option>Clementi Avenue 2 - 4.2km</option>
                         </select>
                     </div>
 
@@ -536,12 +612,7 @@
             <div class="tab-content" id="analytics-tab">
                 <div class="analytics-section">
                     <h2 class="section-title">Community Impact</h2>
-                    
-                    <div class="chart-placeholder">
-                        📊 Usage Analytics Chart<br>
-                        <small>Weekly donation trends</small>
-                    </div>
-
+                    <canvas id="donationChart" style="height:200px; width:100%; margin-bottom:20px;"></canvas>
                     <div class="impact-grid">
                         <div class="impact-card">
                             <div class="impact-value">12,450</div>
@@ -552,7 +623,7 @@
                             <div class="impact-label">Active Donors</div>
                         </div>
                         <div class="impact-card">
-                            <div class="impact-value">42</div>
+                            <div class="impact-value">5</div>
                             <div class="impact-label">Fridges Network</div>
                         </div>
                         <div class="impact-card">
@@ -562,10 +633,44 @@
                     </div>
                 </div>
             </div>
+
+            <!-- FAQ Tab -->
+            <div class="tab-content" id="faq-tab" style="display:none;">
+                <div class="analytics-section">
+                    <h2 class="section-title">FAQ & Help</h2>
+                    <div class="faq-list">
+                        <div class="faq-item">
+                            <button class="faq-question" onclick="toggleFAQ(this)">What is a community fridge?</button>
+                            <div class="faq-answer">A community fridge is a public refrigerator where anyone can donate or take food, helping reduce food waste and support those in need.</div>
+                        </div>
+                        <div class="faq-item">
+                            <button class="faq-question" onclick="toggleFAQ(this)">How do I donate food?</button>
+                            <div class="faq-answer">Go to the Donate tab, select a fridge location, and fill in the details. Please ensure donated food is safe and not expired.</div>
+                        </div>
+                        <div class="faq-item">
+                            <button class="faq-question" onclick="toggleFAQ(this)">Who can take food from the fridge?</button>
+                            <div class="faq-answer">Anyone in the community is welcome to take food from the fridge, no questions asked.</div>
+                        </div>
+                        <div class="faq-item">
+                            <button class="faq-question" onclick="toggleFAQ(this)">How do I report an issue?</button>
+                            <div class="faq-answer">Use the Profile tab to contact support or report issues with a fridge.</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Scan QR Tab -->
+            <div class="tab-content" id="scanqr-tab" style="display:none;"></div>
+
+            <!-- Notifications Tab -->
+            <div class="tab-content" id="notification-tab" style="display:none;"></div>
+
+            <!-- Profile Tab -->
+            <div class="tab-content" id="profile-tab" style="display:none;"></div>
         </div>
 
-        <!-- Floating Action Button -->
-        <button class="floating-action" onclick="openAddFridge()">+</button>
+        <!-- Floating Action Button (Hidden - Not in Used) -->
+        <button style="display: none;" class="floating-action" onclick="openAddFridge()">+</button>
 
         <!-- Bottom Navigation -->
         <div class="bottom-nav">
@@ -573,13 +678,17 @@
                 <div class="nav-icon">🏠</div>
                 <div class="nav-label">Home</div>
             </button>
-            <button class="nav-item">
-                <div class="nav-icon">🔍</div>
-                <div class="nav-label">Search</div>
+            <button class="nav-item" onclick="openFAQ()">
+                <div class="nav-icon">❓</div>
+                <div class="nav-label">FAQ & Help</div>
             </button>
-            <button class="nav-item">
-                <div class="nav-icon">❤️</div>
-                <div class="nav-label">Saved</div>
+            <button class="nav-item" onclick="scanQRCode()">
+                <div class="nav-icon">📷</div>
+                <div class="nav-label">Scan QR</div>
+            </button>
+            <button class="nav-item" onclick="openNotifications()">
+                <div class="nav-icon">🔔</div>
+                <div class="nav-label">Notifications</div>
             </button>
             <button class="nav-item">
                 <div class="nav-icon">👤</div>
@@ -588,25 +697,141 @@
         </div>
     </div>
 
+    <!-- Help Chat Modal -->
+    <div id="helpChat" style="display:none; position:fixed; top:0; left:0; width:100vw; height:100vh; background:rgba(0,0,0,0.7); z-index:999; align-items:center; justify-content:center;">
+        <div style="background:#fff; border-radius:16px; padding:24px; max-width:340px; margin:auto; position:relative; height:400px; display:flex; flex-direction:column;">
+            <h2 style="margin-bottom:16px; font-size:20px;">Help Center Chat</h2>
+            <div id="chatMessages" style="flex:1; overflow-y:auto; background:#f8f9fa; border-radius:8px; padding:10px; margin-bottom:10px; font-size:15px;"></div>
+            <input id="chatInput" type="text" placeholder="Type your message..." style="width:100%; padding:8px; border-radius:8px; border:1px solid #e0e0e0; margin-bottom:8px;">
+            <button id="chatSend" style="width:100%; padding:10px; border:none; background:#4facfe; color:#fff; border-radius:8px; font-size:16px;">Send</button>
+            <button id="chatClose" style="margin-top:8px; width:100%; padding:8px; border:none; background:#ff6b6b; color:#fff; border-radius:8px; font-size:15px;">Close</button>
+        </div>
+    </div>
+
+    <script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://unpkg.com/html5-qrcode@2.3.8/minified/html5-qrcode.min.js"></script>
     <script>
+        // Load Leaflet JS
+        var leafletScript = document.createElement('script');
+        leafletScript.src = 'https://unpkg.com/leaflet/dist/leaflet.js';
+        document.head.appendChild(leafletScript);
+
+        let leafletMapInitialized = false;
+        var fridges = [
+            { name: "Toa Payoh Hub", lat: 1.3321, lng: 103.8498, address: "Block 190 Lorong 6 Toa Payoh", status: "Active", restocked: "2 hours ago", distance: "0.3 km away" },
+            { name: "Ang Mo Kio Community", lat: 1.3691, lng: 103.8558, address: "Block 406 Ang Mo Kio Ave 10", status: "Needs Items", restocked: "1 day ago", distance: "1.2 km away" },
+            { name: "Jurong West Street 42", lat: 1.3511, lng: 103.7172, address: "Block 420 Jurong West Street 42", status: "Well Stocked", restocked: "Today", distance: "2.1 km away" },
+            { name: "Bedok North Community", lat: 1.3331, lng: 103.9271, address: "Block 538 Bedok North Street 3", status: "Low Stock", restocked: "Yesterday", distance: "3.5 km away" },
+            { name: "Clementi Avenue 2", lat: 1.3156, lng: 103.7656, address: "Block 312 Clementi Avenue 2", status: "Active", restocked: "Today", distance: "4.2 km away" }
+        ];
+
+        function renderFridgeList() {
+            var list = document.getElementById('fridge-list');
+            list.innerHTML = '';
+            fridges.forEach(function(fridge) {
+                var statusClass = fridge.status === 'Active' || fridge.status === 'Well Stocked' ? 'status-active' : 'status-needs';
+                list.innerHTML += `
+                    <div class="fridge-card">
+                        <div class="fridge-header">
+                            <div class="fridge-title">${fridge.name}</div>
+                            <div class="status-badge ${statusClass}">${fridge.status}</div>
+                        </div>
+                        <div class="fridge-details">
+                            ${fridge.address}<br>
+                            Last restocked: ${fridge.restocked}
+                        </div>
+                        <div class="fridge-distance">📍 ${fridge.distance}</div>
+                    </div>
+                `;
+            });
+            document.getElementById('fridge-count').textContent = fridges.length;
+        }
+
+        function initLeafletMap() {
+            if (leafletMapInitialized) return;
+            leafletMapInitialized = true;
+            var map = L.map('leaflet-map').setView([1.3521, 103.8198], 11); // Singapore
+            L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+                maxZoom: 19,
+                attribution: '© OpenStreetMap'
+            }).addTo(map);
+            fridges.forEach(function(fridge) {
+                L.marker([fridge.lat, fridge.lng])
+                    .addTo(map)
+                    .bindPopup('<b>' + fridge.name + '</b>');
+            });
+            renderFridgeList();
+        }
+
+        leafletScript.onload = function() {
+            // If map tab is active on load, initialize map
+            if (document.getElementById('map-tab').classList.contains('active')) {
+                setTimeout(initLeafletMap, 100);
+            }
+        };
+
         function showTab(tabName) {
             // Hide all tab contents
-            const allTabs = document.querySelectorAll('.tab-content');
-            allTabs.forEach(tab => tab.classList.remove('active'));
-            
-            // Remove active class from all nav tabs
-            const allNavTabs = document.querySelectorAll('.nav-tab');
-            allNavTabs.forEach(tab => tab.classList.remove('active'));
-            
+            document.querySelectorAll('.tab-content').forEach(tab => {
+                tab.classList.remove('active');
+                tab.style.display = 'none';
+            });
+            // Show main tabs only for map/donate/analytics
+            if (tabName === 'map' || tabName === 'donate' || tabName === 'analytics') {
+                document.getElementById('main-tabs').style.display = 'flex';
+            } else {
+                document.getElementById('main-tabs').style.display = 'none';
+            }
             // Show selected tab content
             document.getElementById(tabName + '-tab').classList.add('active');
-            
-            // Add active class to clicked nav tab
-            event.target.classList.add('active');
+            document.getElementById(tabName + '-tab').style.display = 'block';
         }
 
         function openAddFridge() {
             alert('Add New Fridge Location feature - opens modal/new page');
+        }
+
+        function openFAQ() {
+            // Switch to FAQ tab
+            document.querySelectorAll('.tab-content').forEach(tab => tab.classList.remove('active'));
+            document.getElementById('faq-tab').style.display = 'block';
+            document.getElementById('faq-tab').classList.add('active');
+            document.getElementById('map-tab').style.display = 'none';
+            document.getElementById('donate-tab').style.display = 'none';
+            document.getElementById('analytics-tab').style.display = 'none';
+        }
+        function scanQRCode() {
+            document.getElementById('scanqr-tab').style.display = 'block';
+            document.getElementById('notification-tab').style.display = 'none';
+            document.getElementById('faq-tab').style.display = 'none';
+            document.getElementById('map-tab').style.display = 'none';
+            document.getElementById('donate-tab').style.display = 'none';
+            renderQRCodePage();
+        }
+        function renderQRCodePage() {
+            var scanTab = document.getElementById('scanqr-tab');
+            scanTab.innerHTML = `<div style='padding:24px;'><h2>Scan QR Code</h2><div id='qr-reader' style='width:300px;'></div><div id='qr-result' style='margin-top:16px; font-size:15px;'></div></div>`;
+            if(window.qrScanner) window.qrScanner.clear();
+            window.qrScanner = new Html5Qrcode("qr-reader");
+            window.qrScanner.start({ facingMode: "environment" }, { fps: 10, qrbox: 250 }, qrCodeSuccessCallback);
+        }
+        function qrCodeSuccessCallback(decodedText, decodedResult) {
+            window.qrScanner.stop();
+            var resultDiv = document.getElementById('qr-result');
+            resultDiv.innerHTML = `<b>Scanned Link:</b> <a href='${decodedText}' target='_blank'>${decodedText}</a>`;
+        }
+        function openNotifications() {
+            document.getElementById('notification-tab').style.display = 'block';
+            document.getElementById('scanqr-tab').style.display = 'none';
+            document.getElementById('faq-tab').style.display = 'none';
+            document.getElementById('map-tab').style.display = 'none';
+            document.getElementById('donate-tab').style.display = 'none';
+            renderNotificationPage();
+        }
+        function renderNotificationPage() {
+            var notifTab = document.getElementById('notification-tab');
+            notifTab.innerHTML = `<div style='padding:24px;'><h2>Notifications</h2><div class='notification-item' style='margin-bottom:12px;'><div style='font-weight:600;'>Fridge restocked!</div><div style='font-size:14px; color:#555;'>Toa Payoh Hub was restocked 2 hours ago.</div></div><div class='notification-item' style='margin-bottom:12px;'><div style='font-weight:600;'>Low stock alert</div><div style='font-size:14px; color:#555;'>Bedok North Community needs donations.</div></div><div class='notification-item' style='margin-bottom:12px;'><div style='font-weight:600;'>New fridge added!</div><div style='font-size:14px; color:#555;'>Clementi Avenue 2 is now open for donations.</div></div></div>`;
         }
 
         // Add some interactivity to fridge cards
@@ -618,6 +843,35 @@
                     alert(`Opening details for: ${title}`);
                 });
             });
+
+            // Render donation analytics chart
+            var ctx = document.getElementById('donationChart').getContext('2d');
+            new Chart(ctx, {
+                type: 'line',
+                data: {
+                    labels: ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'],
+                    datasets: [{
+                        label: 'Meals Donated',
+                        data: [120, 150, 180, 90, 200, 170, 220],
+                        backgroundColor: 'rgba(79,172,254,0.2)',
+                        borderColor: 'rgba(79,172,254,1)',
+                        borderWidth: 2,
+                        pointBackgroundColor: 'rgba(79,172,254,1)',
+                        tension: 0.3,
+                        fill: true
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    plugins: {
+                        legend: { display: false },
+                        title: { display: true, text: 'Weekly Donation Trend' }
+                    },
+                    scales: {
+                        y: { beginAtZero: true }
+                    }
+                }
+            });
         });
 
         // Simulate real-time updates
@@ -625,6 +879,250 @@
             const statusBadges = document.querySelectorAll('.status-badge');
             // Could update statuses dynamically here
         }, 30000);
+
+        // Bottom nav handlers
+        document.querySelector('.nav-item:nth-child(1)').onclick = function() { showTab('map'); };
+        document.querySelector('.nav-item:nth-child(2)').onclick = function() { showTab('faq'); };
+        document.querySelector('.nav-item:nth-child(3)').onclick = function() { showTab('scanqr'); renderQRCodePage(); };
+        document.querySelector('.nav-item:nth-child(4)').onclick = function() { showTab('notification'); renderNotificationPage(); };
+        document.querySelector('.nav-item:nth-child(5)').onclick = function() { showTab('profile'); };
+        // Profile full page
+        document.getElementById('profile-tab').innerHTML = `
+            <div style='padding:24px;'>
+                <h2 class='section-title'>Profile</h2>
+                <form id='profileForm' style='margin-bottom:24px;'>
+                    <div style='margin-bottom:16px;'>
+                        <label style='font-weight:600;'>Name</label>
+                        <input type='text' id='profileName' value='User Name' style='width:100%; padding:8px; border-radius:8px; border:1px solid #e0e0e0;'>
+                    </div>
+                    <div style='margin-bottom:16px;'>
+                        <label style='font-weight:600;'>Email</label>
+                        <input type='email' id='profileEmail' value='user@email.com' style='width:100%; padding:8px; border-radius:8px; border:1px solid #e0e0e0;'>
+                    </div>
+                    <button type='button' id='updateProfileBtn' style='width:100%; padding:10px; border:none; background:#4facfe; color:#fff; border-radius:8px; font-size:16px;'>Update Profile</button>
+                </form>
+                <div style='margin-bottom:24px;'>
+                    <label style='font-weight:600;'>Language</label>
+                    <select id='languageSelect' style='width:100%; padding:8px; border-radius:8px; border:1px solid #e0e0e0; margin-bottom:12px;'>
+                        <option value='en'>English</option>
+                        <option value='zh'>中文</option>
+                        <option value='ms'>Malay</option>
+                        <option value='ta'>Tamil</option>
+                    </select>
+                </div>
+                <div style='margin-bottom:24px;'>
+                    <label style='font-weight:600;'>Preferences</label>
+                    <div style='margin-top:8px;'>
+                        <label><input type='checkbox' id='prefNotify' checked> Enable notifications</label><br>
+                        <label><input type='checkbox' id='prefDark'> Dark mode</label>
+                    </div>
+                </div>
+                <div style='margin-bottom:24px;'>
+                    <button type='button' id='helpCenterBtn' style='width:100%; padding:10px; border:none; background:#e3f2fd; color:#333; border-radius:8px; font-size:15px;'>Help Center</button>
+                </div>
+                <div style='margin-bottom:24px;'>
+                    <button type='button' id='logoutBtn' style='width:100%; padding:10px; border:none; background:#ff6b6b; color:#fff; border-radius:8px; font-size:16px;'>Logout</button>
+                </div>
+                <div>
+                    <button type='button' id='deleteAccountBtn' style='width:100%; padding:10px; border:none; background:#333; color:#fff; border-radius:8px; font-size:16px;'>Delete Account</button>
+                </div>
+            </div>
+        `;
+        // Profile actions
+        document.getElementById('updateProfileBtn').onclick = function() {
+            alert('Profile updated!');
+        };
+        document.getElementById('languageSelect').onchange = function() {
+            alert('Language changed to ' + this.options[this.selectedIndex].text);
+        };
+        document.getElementById('prefNotify').onchange = function() {
+            alert('Notifications ' + (this.checked ? 'enabled' : 'disabled'));
+        };
+        document.getElementById('prefDark').onchange = function() {
+            alert('Dark mode ' + (this.checked ? 'enabled' : 'disabled'));
+        };
+        document.getElementById('helpCenterBtn').onclick = function() {
+            document.getElementById('helpChat').style.display = 'flex';
+            document.getElementById('chatMessages').innerHTML = '<div style="margin-bottom:8px;">👋 Hi! How can we help you today?</div>';
+        };
+        document.getElementById('chatSend').onclick = function() {
+            var input = document.getElementById('chatInput');
+            var msg = input.value.trim();
+            if(msg) {
+                var chat = document.getElementById('chatMessages');
+                chat.innerHTML += `<div style='margin-bottom:8px;'><b>You:</b> ${msg}</div>`;
+                setTimeout(function(){
+                    chat.innerHTML += `<div style='margin-bottom:8px;'><b>Support:</b> Thanks for reaching out! We'll get back to you soon.`;
+                }, 700);
+                input.value = '';
+                chat.scrollTop = chat.scrollHeight;
+            }
+        };
+        document.getElementById('chatClose').onclick = function() {
+            document.getElementById('helpChat').style.display = 'none';
+        };
+        document.getElementById('logoutBtn').onclick = function() {
+            if(confirm('Are you sure you want to logout?')) {
+                showTab('map');
+                alert('Logged out!');
+                // redirect to auth.html
+                window.location.href = 'auth.html';
+            }
+        };
+        document.getElementById('deleteAccountBtn').onclick = function() {
+            if(confirm('Are you sure you want to delete your account? This cannot be undone.')) {
+                showTab('map');
+                alert('Account deleted!');
+                // redirect to auth.html
+                window.location.href = 'auth.html';
+            }
+        };
+
+        // Language translations
+        const translations = {
+            en: {
+                home: "Home",
+                faq: "FAQ & Help",
+                scanqr: "Scan QR",
+                notification: "Notifications",
+                profile: "Profile",
+                donate: "Donate Food Items",
+                impact: "Community Impact",
+                fridge: "Fridge",
+                mealsShared: "Meals Shared",
+                activeFridges: "Active Fridges",
+                helpCenter: "Help Center",
+                updateProfile: "Update Profile",
+                language: "Language",
+                preferences: "Preferences",
+                logout: "Logout",
+                deleteAccount: "Delete Account"
+            },
+            zh: {
+                home: "主页",
+                faq: "常见问题与帮助",
+                scanqr: "扫描二维码",
+                notification: "通知",
+                profile: "个人资料",
+                donate: "捐赠食物",
+                impact: "社区影响",
+                fridge: "冰箱",
+                mealsShared: "分享的餐食",
+                activeFridges: "活跃冰箱",
+                helpCenter: "帮助中心",
+                updateProfile: "更新资料",
+                language: "语言",
+                preferences: "偏好设置",
+                logout: "登出",
+                deleteAccount: "删除账户"
+            },
+            ms: {
+                home: "Laman Utama",
+                faq: "Soalan Lazim & Bantuan",
+                scanqr: "Imbas QR",
+                notification: "Notifikasi",
+                profile: "Profil",
+                donate: "Derma Makanan",
+                impact: "Impak Komuniti",
+                fridge: "Petisejuk",
+                mealsShared: "Makanan Dikongsi",
+                activeFridges: "Petisejuk Aktif",
+                helpCenter: "Pusat Bantuan",
+                updateProfile: "Kemaskini Profil",
+                language: "Bahasa",
+                preferences: "Keutamaan",
+                logout: "Log Keluar",
+                deleteAccount: "Padam Akaun"
+            },
+            ta: {
+                home: "முகப்பு",
+                faq: "அடிக்கடி கேட்கப்படும் கேள்விகள் & உதவி",
+                scanqr: "QR குறியீட்டை ஸ்கேன் செய்யவும்",
+                notification: "அறிவிப்புகள்",
+                profile: "சுயவிவரம்",
+                donate: "உணவு வழங்கவும்",
+                impact: "சமூக தாக்கம்",
+                fridge: "குளிர்சாதன பெட்டி",
+                mealsShared: "பகிரப்பட்ட உணவுகள்",
+                activeFridges: "செயலில் உள்ள குளிர்சாதன பெட்டிகள்",
+                helpCenter: "உதவி மையம்",
+                updateProfile: "சுயவிவரத்தை புதுப்பிக்கவும்",
+                language: "மொழி",
+                preferences: "விருப்பங்கள்",
+                logout: "வெளியேறு",
+                deleteAccount: "கணக்கை நீக்கு"
+            }
+        };
+        function setLanguage(lang) {
+            localStorage.setItem('language', lang);
+            const t = translations[lang] || translations['en'];
+            document.querySelector('.nav-item:nth-child(1) .nav-label').textContent = t.home;
+            document.querySelector('.nav-item:nth-child(2) .nav-label').textContent = t.faq;
+            document.querySelector('.nav-item:nth-child(3) .nav-label').textContent = t.scanqr;
+            document.querySelector('.nav-item:nth-child(4) .nav-label').textContent = t.notification;
+            document.querySelector('.nav-item:nth-child(5) .nav-label').textContent = t.profile;
+            document.querySelector('.section-title').textContent = t.profile;
+            document.getElementById('updateProfileBtn').textContent = t.updateProfile;
+            document.getElementById('languageSelect').previousElementSibling.textContent = t.language;
+            document.getElementById('helpCenterBtn').textContent = t.helpCenter;
+            document.getElementById('logoutBtn').textContent = t.logout;
+            document.getElementById('deleteAccountBtn').textContent = t.deleteAccount;
+            // Add more UI text updates as needed
+        }
+        // On language change
+        document.getElementById('languageSelect').onchange = function() {
+            setLanguage(this.value);
+            alert('Language changed to ' + this.options[this.selectedIndex].text);
+        };
+        // Load language on startup
+        document.addEventListener('DOMContentLoaded', function() {
+            const lang = localStorage.getItem('language') || 'en';
+            setLanguage(lang);
+            document.getElementById('languageSelect').value = lang;
+        });
+        // Preferences: dark mode
+        function setDarkMode(enabled) {
+            localStorage.setItem('darkMode', enabled ? '1' : '0');
+            const style = document.getElementById('dark-theme-style');
+            style.textContent = enabled ? `body { background: #222 !important; color: #eee !important; }
+    .mobile-container { background: #333 !important; color: #eee !important; }
+    .nav-tabs, .bottom-nav { background: #222 !important; color: #eee !important; }
+    .nav-label, .nav-icon { color: #eee !important; }
+    .tab-content, .form-section, .fridge-card, .fridge-header, .fridge-title, .stat-card, .impact-card, .faq-list, .faq-question, .faq-answer, .faq-item.active .faq-answer, #helpChat .modal-content, #chatMessages, #chatInput, #chatSend, #chatClose { background: #333 !important; color: #eee !important; border-color: #444 !important; }
+    button, select, input, textarea { background: #222 !important; color: #eee !important; border-color: #444 !important; }
+    h1, h2, h3, .section-title { color: #eee !important; }
+    ` : '';
+        }
+        document.getElementById('prefDark').onchange = function() {
+            setDarkMode(this.checked);
+            alert('Dark mode ' + (this.checked ? 'enabled' : 'disabled'));
+        };
+        // Load dark mode on startup
+        document.addEventListener('DOMContentLoaded', function() {
+            const dark = localStorage.getItem('darkMode') === '1';
+            document.getElementById('prefDark').checked = dark;
+            setDarkMode(dark);
+        });
+        // Preferences: notifications
+        document.getElementById('prefNotify').onchange = function() {
+            localStorage.setItem('notifications', this.checked ? '1' : '0');
+            alert('Notifications ' + (this.checked ? 'enabled' : 'disabled'));
+        };
+        document.addEventListener('DOMContentLoaded', function() {
+            const notify = localStorage.getItem('notifications') === '1';
+            document.getElementById('prefNotify').checked = notify;
+        });
+
+        function toggleFAQ(btn) {
+            var item = btn.parentElement;
+            item.classList.toggle('active');
+            var answer = item.querySelector('.faq-answer');
+            if (item.classList.contains('active')) {
+                answer.style.display = 'block';
+            } else {
+                answer.style.display = 'none';
+            }
+        }
     </script>
 </body>
 </html>
